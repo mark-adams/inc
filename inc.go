@@ -28,6 +28,11 @@ func getRandomID() (string, error) {
 func init() {
 
 	app = martini.Classic()
+
+	app.Get("/_healthcheck", func() string {
+		return "OK"
+	})
+
 	app.Post("/new", func() (int, string) {
 		id, err := getRandomID()
 		if err != nil {
