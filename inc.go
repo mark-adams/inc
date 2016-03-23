@@ -3,32 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
 
 	"github.com/go-martini/martini"
-
-	_ "github.com/lib/pq"
 )
 
 const errDatabase = "😧 The database is having some trouble... try again?"
 
-func createDatabase(db *sql.DB) error {
-	_, err := db.Exec("CREATE TABLE IF NOT EXISTS counters (id char(32) PRIMARY KEY, count bigint);")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func getDatabase() (*sql.DB, error) {
-	databaseURL := os.Getenv("PG_DB_URL")
-	return sql.Open("postgres", databaseURL)
-}
+var app *martini.ClassicMartini
 
 func getRandomID() (string, error) {
 	newID := make([]byte, 16)
@@ -40,26 +25,16 @@ func getRandomID() (string, error) {
 	return hex.EncodeToString(newID), nil
 }
 
-func main() {
-	db, err := getDatabase()
-	if err != nil {
-		log.Fatal(err)
-	}
+func init() {
 
-	err = createDatabase(db)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	m := martini.Classic()
-	m.Post("/new", func() (int, string) {
+	app = martini.Classic()
+	app.Post("/new", func() (int, string) {
 		id, err := getRandomID()
 		if err != nil {
 			log.Printf("Error: %s", err)
 			return 500, "😞 Something bad happened... try again?"
 		}
-
-		db, err = getDatabase()
+		db, err := GetDatabase()
 		if err != nil {
 			log.Printf("Database error: %s", err)
 			return 500, errDatabase
@@ -70,11 +45,11 @@ func main() {
 			log.Printf("Insert error: %s", err)
 			return 500, errDatabase
 		}
-		return 200, id
+		return 201, id
 	})
 
-	m.Put("/(?P<token>[a-zA-Z0-9]{32})", func(params martini.Params) (int, string) {
-		db, err = getDatabase()
+	app.Put("/(?P<token>[a-zA-Z0-9]{32})", func(params martini.Params) (int, string) {
+		db, err := GetDatabase()
 		if err != nil {
 			return 500, errDatabase
 		}
@@ -108,7 +83,18 @@ func main() {
 		tx.Commit()
 		return 200, fmt.Sprintf("%d", count+1)
 	})
+}
 
-	m.Run()
+func main() {
+	db, err := GetDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	err = CreateDatabaseSchema(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	app.Run()
 }

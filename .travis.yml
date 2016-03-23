@@ -1,0 +1,18 @@
+language: go
+sudo: false
+
+go:
+    - 1.6
+    - tip
+
+services:
+    - postgresql
+
+env:
+    - PG_DB_URL=postgresql://postgres@localhost/?sslmode=disable
+
+before_script:
+      - psql -c 'create database inc_test;' -U postgres
+
+script:
+    go test -v .
