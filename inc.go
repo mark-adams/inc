@@ -39,7 +39,7 @@ func init() {
 			log.Printf("Error: %s", err)
 			return 500, "😞 Something bad happened... try again?"
 		}
-		db, err := GetDatabase()
+		db, err := getDatabase()
 		if err != nil {
 			log.Printf("Database error: %s", err)
 			return 500, errDatabase
@@ -54,7 +54,7 @@ func init() {
 	})
 
 	app.Put("/(?P<token>[a-zA-Z0-9]{32})", func(params martini.Params) (int, string) {
-		db, err := GetDatabase()
+		db, err := getDatabase()
 		if err != nil {
 			return 500, errDatabase
 		}
@@ -63,6 +63,7 @@ func init() {
 		tx, err := db.Begin()
 		if err != nil {
 			defer tx.Rollback()
+			log.Printf("Error starting transaction: %s", err)
 			return 500, errDatabase
 		}
 
@@ -70,18 +71,18 @@ func init() {
 		var count uint64
 		err = result.Scan(&count)
 		if err == sql.ErrNoRows {
-			return 404, "404 page not found"
+			return 404, "404 invalid token"
 		}
 		if err != nil {
 			defer tx.Rollback()
-			log.Printf("%s", err)
+			log.Printf("Error querying database: %s", err)
 			return 500, errDatabase
 		}
 
 		_, err = tx.Exec("UPDATE counters SET count = count + 1 WHERE id = $1", params["token"])
 		if err != nil {
 			defer tx.Rollback()
-			log.Printf("%s", err)
+			log.Printf("Error updating counter: %s", err)
 			return 500, errDatabase
 		}
 
@@ -91,12 +92,13 @@ func init() {
 }
 
 func main() {
-	db, err := GetDatabase()
+	db, err := getDatabase()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = CreateDatabaseSchema(db)
+	// Create the database schema if needed
+	err = createDatabaseSchema(db)
 	if err != nil {
 		log.Fatal(err)
 	}

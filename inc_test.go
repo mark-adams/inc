@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 )
 
-func dropDatabaseTables(t *testing.T, db *sql.DB) {
+func dropDatabaseSchema(t *testing.T, db *sql.DB) {
 	_, err := db.Exec("DROP TABLE IF EXISTS counters;")
 	if err != nil {
 		t.Fatalf("Error dropping tables: %s", err)
@@ -17,16 +17,16 @@ func dropDatabaseTables(t *testing.T, db *sql.DB) {
 }
 
 func resetDatabase(t *testing.T) {
-	db, err := GetDatabase()
+	db, err := getDatabase()
 	if err != nil {
 		t.Fatalf("Error connecting to database: %s", err)
 	}
 
 	// Drop tables
-	dropDatabaseTables(t, db)
+	dropDatabaseSchema(t, db)
 
 	// Create tables
-	err = CreateDatabaseSchema(db)
+	err = createDatabaseSchema(db)
 
 	if err != nil {
 		t.Fatalf("Error creating tables: %s", err)
