@@ -13,7 +13,7 @@ go install github.com/mark-adams/inc
 ```
 $ http POST http://localhost:3000/new  
 
-HTTP/1.1 200 OK
+HTTP/1.1 201 Created
 Content-Length: 32
 Content-Type: text/plain; charset=utf-8
 Date: Wed, 23 Mar 2016 00:30:26 GMT
