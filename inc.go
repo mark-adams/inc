@@ -5,13 +5,12 @@ import (
 	"log"
 
 	"crypto/rand"
-	"database/sql"
 	"encoding/hex"
 
 	"github.com/go-martini/martini"
+	_ "github.com/lib/pq"
+	"github.com/mark-adams/inc/backends"
 )
-
-const errDatabase = "😧 The database is having some trouble... try again?"
 
 var app *martini.ClassicMartini
 
@@ -39,66 +38,42 @@ func init() {
 			log.Printf("Error: %s", err)
 			return 500, "😞 Something bad happened... try again?"
 		}
-		db, err := getDatabase()
+		db, err := backends.GetBackend()
 		if err != nil {
 			log.Printf("Database error: %s", err)
-			return 500, errDatabase
+			return 500, err.Error()
 		}
 
-		_, err = db.Exec("INSERT into counters (id, count) VALUES ($1, 0)", id)
+		err = db.CreateToken(id)
 		if err != nil {
 			log.Printf("Insert error: %s", err)
-			return 500, errDatabase
+			return 500, err.Error()
 		}
 		return 201, id
 	})
 
 	app.Put("/(?P<token>[a-zA-Z0-9]{32})", func(params martini.Params) (int, string) {
-		db, err := getDatabase()
+		db, err := backends.GetBackend()
 		if err != nil {
-			return 500, errDatabase
+			return 500, err.Error()
 		}
-		defer db.Close()
-
-		tx, err := db.Begin()
+		count, err := db.IncrementAndGetToken(params["token"])
 		if err != nil {
-			defer tx.Rollback()
-			log.Printf("Error starting transaction: %s", err)
-			return 500, errDatabase
+			return 500, err.Error()
 		}
 
-		result := tx.QueryRow("SELECT count from counters WHERE id = $1 FOR UPDATE", params["token"])
-		var count uint64
-		err = result.Scan(&count)
-		if err == sql.ErrNoRows {
-			return 404, "404 invalid token"
-		}
-		if err != nil {
-			defer tx.Rollback()
-			log.Printf("Error querying database: %s", err)
-			return 500, errDatabase
-		}
-
-		_, err = tx.Exec("UPDATE counters SET count = count + 1 WHERE id = $1", params["token"])
-		if err != nil {
-			defer tx.Rollback()
-			log.Printf("Error updating counter: %s", err)
-			return 500, errDatabase
-		}
-
-		tx.Commit()
-		return 200, fmt.Sprintf("%d", count+1)
+		return 200, fmt.Sprintf("%d", count)
 	})
 }
 
 func main() {
-	db, err := getDatabase()
+	db, err := backends.GetBackend()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Create the database schema if needed
-	err = createDatabaseSchema(db)
+	err = db.CreateSchema()
 	if err != nil {
 		log.Fatal(err)
 	}

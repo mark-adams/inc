@@ -1,34 +1,33 @@
 package main
 
 import (
-	"database/sql"
 	"log"
+	"os"
+
 	"testing"
 
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/mark-adams/inc/backends"
 )
 
-func dropDatabaseSchema(t *testing.T, db *sql.DB) {
-	_, err := db.Exec("DROP TABLE IF EXISTS counters;")
-	if err != nil {
-		t.Fatalf("Error dropping tables: %s", err)
-	}
-}
+const testDbStr = "memory://"
 
 func resetDatabase(t *testing.T) {
-	db, err := getDatabase()
+	os.Setenv("DB_URL", testDbStr)
+	db, err := backends.GetBackend()
 	if err != nil {
 		t.Fatalf("Error connecting to database: %s", err)
 	}
 
 	// Drop tables
-	dropDatabaseSchema(t, db)
+	if err = db.DropSchema(); err != nil {
+		t.Fatalf("Error dropping schema: %s", err)
+	}
 
 	// Create tables
-	err = createDatabaseSchema(db)
-
-	if err != nil {
+	if err = db.CreateSchema(); err != nil {
 		t.Fatalf("Error creating tables: %s", err)
 	}
 }
