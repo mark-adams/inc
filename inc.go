@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"crypto/rand"
 	"encoding/hex"
@@ -28,7 +29,8 @@ func getRandomID() (string, error) {
 func init() {
 
 	app = martini.Classic()
-	statsd, err := statsd.New()
+
+	metrics, err := statsd.New(statsd.Address(os.Getenv("STATSD_HOST")))
 	if err != nil {
 		log.Printf("error initializing metrics: %s", err)
 	}
@@ -38,7 +40,7 @@ func init() {
 	})
 
 	app.Post("/new", func() (int, string) {
-		statsd.Increment("inc.api.create_token")
+		metrics.Increment("inc.api.create_token")
 
 		id, err := getRandomID()
 		if err != nil {
@@ -60,7 +62,7 @@ func init() {
 	})
 
 	app.Put("/(?P<token>[a-zA-Z0-9]{32})", func(params martini.Params) (int, string) {
-		statsd.Increment("inc.api.increment_token")
+		metrics.Increment("inc.api.increment_token")
 
 		db, err := backends.GetBackend()
 		if err != nil {
