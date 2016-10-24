@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"crypto/rand"
 	"encoding/hex"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-martini/martini"
 	_ "github.com/lib/pq"
 	"github.com/mark-adams/inc/backends"
+	"gopkg.in/alexcesaro/statsd.v2"
 )
 
 var app *martini.ClassicMartini
@@ -28,11 +30,18 @@ func init() {
 
 	app = martini.Classic()
 
+	metrics, err := statsd.New(statsd.Address(os.Getenv("STATSD_HOST")))
+	if err != nil {
+		log.Printf("error initializing metrics: %s", err)
+	}
+
 	app.Get("/_healthcheck", func() string {
 		return "OK"
 	})
 
 	app.Post("/new", func() (int, string) {
+		metrics.Increment("inc.api.create_token")
+
 		id, err := getRandomID()
 		if err != nil {
 			log.Printf("Error: %s", err)
@@ -53,6 +62,8 @@ func init() {
 	})
 
 	app.Put("/(?P<token>[a-zA-Z0-9]{32})", func(params martini.Params) (int, string) {
+		metrics.Increment("inc.api.increment_token")
+
 		db, err := backends.GetBackend()
 		if err != nil {
 			return 500, err.Error()
