@@ -3,18 +3,20 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"crypto/rand"
 	"encoding/hex"
 
-	"github.com/go-martini/martini"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/mark-adams/inc/backends"
 	"gopkg.in/alexcesaro/statsd.v2"
 )
 
-var app *martini.ClassicMartini
+var app *mux.Router
 
 func getRandomID() (string, error) {
 	newID := make([]byte, 16)
@@ -27,53 +29,72 @@ func getRandomID() (string, error) {
 }
 
 func init() {
-
-	app = martini.Classic()
+	app = mux.NewRouter()
 
 	metrics, err := statsd.New(statsd.Address(os.Getenv("STATSD_HOST")))
-	if err != nil {
+	if err != nil && os.Getenv("STATSD_HOST") != "" {
 		log.Printf("error initializing metrics: %s", err)
 	}
 
-	app.Get("/_healthcheck", func() string {
-		return "OK"
+	app.Path("/_healthcheck").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.Write([]byte("OK"))
 	})
 
-	app.Post("/new", func() (int, string) {
+	app.Path("/new").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
 		metrics.Increment("inc.api.create_token")
 
 		id, err := getRandomID()
 		if err != nil {
 			log.Printf("Error: %s", err)
-			return 500, "😞 Something bad happened... try again?"
+			http.Error(w, "😞 Something bad happened... try again?", http.StatusInternalServerError)
+			return
 		}
 		db, err := backends.GetBackend()
 		if err != nil {
 			log.Printf("Database error: %s", err)
-			return 500, err.Error()
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		err = db.CreateToken(id)
 		if err != nil {
 			log.Printf("Insert error: %s", err)
-			return 500, err.Error()
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		return 201, id
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(id))
 	})
 
-	app.Put("/(?P<token>[a-zA-Z0-9]{32})", func(params martini.Params) (int, string) {
-		metrics.Increment("inc.api.increment_token")
+	app.Path("/{token:[a-zA-Z0-9]{32}}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 
+		metrics.Increment("inc.api.increment_token")
+		params := mux.Vars(r)
 		db, err := backends.GetBackend()
 		if err != nil {
-			return 500, err.Error()
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		count, err := db.IncrementAndGetToken(params["token"])
 		if err != nil {
-			return 500, err.Error()
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		return 200, fmt.Sprintf("%d", count)
+		w.Write([]byte(fmt.Sprintf("%d", count)))
 	})
 }
 
@@ -89,5 +110,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app.Run()
+	handler := handlers.CombinedLoggingHandler(os.Stdout, app)
+	http.ListenAndServe(":8080", handler)
 }
