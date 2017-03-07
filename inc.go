@@ -112,6 +112,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	db.Close()
 
 	handler := handlers.CombinedLoggingHandler(os.Stdout, app)
 	http.ListenAndServe(":8080", handler)
