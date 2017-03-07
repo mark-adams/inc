@@ -8,6 +8,10 @@ func NewInMemoryBackend() (*InMemoryBackend, error) {
 	return &InMemoryBackend{}, nil
 }
 
+func (b *InMemoryBackend) Close() error {
+	return nil
+}
+
 func (b *InMemoryBackend) CreateSchema() error {
 	inMemoryTokens = make(map[string]int64)
 	return nil

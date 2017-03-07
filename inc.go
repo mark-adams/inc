@@ -64,6 +64,7 @@ func init() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		defer db.Close()
 
 		err = db.CreateToken(id)
 		if err != nil {
@@ -88,6 +89,8 @@ func init() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		defer db.Close()
+
 		count, err := db.IncrementAndGetToken(params["token"])
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

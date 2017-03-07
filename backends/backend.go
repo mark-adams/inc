@@ -2,12 +2,14 @@ package backends
 
 import (
 	"errors"
+	"io"
 	"os"
 	"strings"
 )
 
 // Backend represents the data store used by inc
 type Backend interface {
+	io.Closer
 	CreateSchema() error
 	DropSchema() error
 	CreateToken(token string) error

@@ -21,6 +21,10 @@ func NewPostgresBackend(databaseURL string) (*PostgresBackend, error) {
 	}, nil
 }
 
+func (p *PostgresBackend) Close() error {
+	return p.db.Close()
+}
+
 func (p *PostgresBackend) CreateSchema() error {
 	_, err := p.db.Exec("CREATE TABLE IF NOT EXISTS counters (id char(32) PRIMARY KEY, count bigint);")
 	if err != nil {
