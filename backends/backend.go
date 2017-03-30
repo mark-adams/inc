@@ -13,6 +13,7 @@ type Backend interface {
 	CreateSchema() error
 	DropSchema() error
 	CreateToken(token string) error
+	IncrementAndGetNamespacedToken(token string, namespace string) (int64, error)
 	IncrementAndGetToken(token string) (int64, error)
 }
 

@@ -2,7 +2,6 @@ package backends
 
 import (
 	"database/sql"
-
 	"log"
 )
 
@@ -26,7 +25,14 @@ func (p *PostgresBackend) Close() error {
 }
 
 func (p *PostgresBackend) CreateSchema() error {
-	_, err := p.db.Exec("CREATE TABLE IF NOT EXISTS counters (id char(32) PRIMARY KEY, count bigint);")
+	_, err := p.db.Exec(`CREATE TABLE IF NOT EXISTS counters
+							(id char(32) PRIMARY KEY, count bigint);
+
+						  CREATE TABLE IF NOT EXISTS namespaced_counters
+							(id bigserial PRIMARY KEY, token char(32),
+							 namespace varchar, count bigint,
+							 UNIQUE (token, namespace),
+							 FOREIGN KEY (token) REFERENCES counters (ID))`)
 	if err != nil {
 		return err
 	}
@@ -35,13 +41,57 @@ func (p *PostgresBackend) CreateSchema() error {
 }
 
 func (p *PostgresBackend) DropSchema() error {
-	_, err := p.db.Exec("DROP TABLE IF EXISTS counters;")
+	_, err := p.db.Exec(`DROP TABLE IF EXISTS counters;
+						 DROP TABLE IF EXISTS semantic_tokens;`)
 	return err
 }
 
 func (p *PostgresBackend) CreateToken(token string) error {
 	_, err := p.db.Exec("INSERT into counters (id, count) VALUES ($1, 0)", token)
 	return err
+}
+
+func (p *PostgresBackend) IncrementAndGetNamespacedToken(token string, namespace string) (int64, error) {
+	tx, err := p.db.Begin()
+	if err != nil {
+		defer tx.Rollback()
+		log.Printf("Error starting transaction: %s", err)
+		return 0, errDatabase
+	}
+
+	var count int64
+
+	err = tx.QueryRow(`SELECT s.count
+						FROM namespaced_counters AS s
+						WHERE token = $1 AND namespace = $2 FOR UPDATE`, token, namespace).Scan(&count)
+
+	// No counter found for this namespace, create namespace and initialize count to 0
+	if err == sql.ErrNoRows {
+		_, err := p.db.Exec(`INSERT INTO namespaced_counters (token, namespace, count)
+							 VALUES ($1, $2, 0)`, token, namespace)
+		if err != nil {
+			defer tx.Rollback()
+			log.Printf("Error creating namespaced counter: %s", err)
+			return 0, errDatabase
+		}
+
+		tx.Commit()
+
+		return 0, nil
+	}
+	count += 1
+	_, err = tx.Exec(`UPDATE namespaced_counters
+					  SET count = $1
+					  WHERE token = $2 AND namespace = $3`, count, token, namespace)
+	tx.Commit()
+
+	if err != nil {
+		defer tx.Rollback()
+		log.Printf("Error updating namespaced counter: %s", err)
+		return 0, errDatabase
+	}
+
+	return count, nil
 }
 
 func (p *PostgresBackend) IncrementAndGetToken(token string) (int64, error) {

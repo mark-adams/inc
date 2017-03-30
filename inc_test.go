@@ -127,3 +127,46 @@ func TestPutOnNewTokenShouldIncrementValue(t *testing.T) {
 	}
 
 }
+
+func TestPutOnNewNamespaceShouldIncrementFromZero(t *testing.T) {
+	resetDatabase(t)
+	req, err := http.NewRequest("POST", "http://localhost/new", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response := httptest.NewRecorder()
+	app.ServeHTTP(response, req)
+
+	if response.Code != 201 {
+		t.Fatalf("Incorrect status code: expected %v, actual %v", 201, response.Code)
+	}
+
+	token := response.Body.String()
+	req, err = http.NewRequest("PUT", "http://localhost/"+token+"/1.0", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response = httptest.NewRecorder()
+	app.ServeHTTP(response, req)
+
+	if response.Code != 200 {
+		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)
+	}
+
+	if response.Body.String() != "0" {
+		t.Fatalf("Incorrect initial token value: expected %v, actual %v", "0", response.Body.String())
+	}
+
+	response = httptest.NewRecorder()
+	app.ServeHTTP(response, req)
+
+	if response.Code != 200 {
+		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)
+	}
+
+	if response.Body.String() != "1" {
+		t.Fatalf("Counter value did not increment: expected %v, actual %v", "1", response.Body.String())
+	}
+}

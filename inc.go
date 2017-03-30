@@ -1,19 +1,17 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
-	"crypto/rand"
-	"encoding/hex"
-
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/mark-adams/inc/backends"
-	"gopkg.in/alexcesaro/statsd.v2"
 )
 
 var app *mux.Router
@@ -41,7 +39,7 @@ func init() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		w.Write([]byte("OK"))
+		fmt.Fprint("OK")
 	})
 
 	app.Path("/new").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +95,33 @@ func init() {
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("%d", count)))
+		fmt.Fprintf(w, "%d", count)
+	})
+
+	app.Path("/{token:[a-zA-Z0-9]{32}}/{namespace:.+}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method != "PUT" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		metrics.Increment("inc.api.increment_namespace_token")
+		params := mux.Vars(r)
+		db, err := backends.GetBackend()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		count, err := db.IncrementAndGetNamespacedToken(params["token"], params["namespace"])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "%d", count)
+
 	})
 }
 
