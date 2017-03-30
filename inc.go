@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 
+	statsd "gopkg.in/alexcesaro/statsd.v2"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -39,7 +41,7 @@ func init() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		fmt.Fprint("OK")
+		fmt.Fprint(w, "OK")
 	})
 
 	app.Path("/new").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
