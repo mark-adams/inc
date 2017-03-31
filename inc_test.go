@@ -169,4 +169,22 @@ func TestPutOnNewNamespaceShouldIncrementFromZero(t *testing.T) {
 	if response.Body.String() != "1" {
 		t.Fatalf("Counter value did not increment: expected %v, actual %v", "1", response.Body.String())
 	}
+
+	// Change namespace from 1.0 -> 1.1
+	req, err = http.NewRequest("PUT", "http://localhost/"+token+"/1.1", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response = httptest.NewRecorder()
+	app.ServeHTTP(response, req)
+
+	if response.Code != 200 {
+		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)
+	}
+
+	if response.Body.String() != "0" {
+		t.Fatalf("Incorrect initial token value for new namespace: expected %v, actual %v", "0", response.Body.String())
+	}
+
 }
