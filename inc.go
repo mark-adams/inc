@@ -86,7 +86,7 @@ func IncrementTokenNamespace(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	count, err := db.IncrementAndGetNamespacedToken(chi.URLParam(r, "token"), chi.URLParam(r, "namespae"))
+	count, err := db.IncrementAndGetNamespacedToken(chi.URLParam(r, "token"), chi.URLParam(r, "namespace"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
