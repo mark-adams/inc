@@ -39,6 +39,12 @@ func NewBackendFromString(url string) (Backend, error) {
 			return nil, err
 		}
 		return backend, nil
+	case "redis":
+		backend, err := NewRedisBackend(url)
+		if err != nil {
+			return nil, err
+		}
+		return backend, nil
 	default:
 		return nil, errors.New("Invalid backend type")
 	}
