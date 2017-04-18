@@ -8,8 +8,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/mark-adams/inc/api"
 	"github.com/mark-adams/inc/backends"
-
-	_ "github.com/lib/pq" // For postgres support
 )
 
 func main() {

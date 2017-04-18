@@ -3,6 +3,8 @@ package backends
 import (
 	"database/sql"
 	"log"
+
+	_ "github.com/lib/pq" // For postgres support
 )
 
 type PostgresBackend struct {
