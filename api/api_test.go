@@ -1,4 +1,4 @@
-package main
+package api_test
 
 import (
 	"log"
@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/mark-adams/inc/api"
 	"github.com/mark-adams/inc/backends"
 )
 
@@ -40,7 +41,7 @@ func TestNewTokenCreationReturnsResponse(t *testing.T) {
 	}
 
 	response := httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 201 {
 		t.Fatalf("Incorrect status code: expected %v, actual: %v", 201, response.Code)
@@ -62,10 +63,10 @@ func TestNewTokensAreUnique(t *testing.T) {
 	}
 
 	firstResponse := httptest.NewRecorder()
-	app.ServeHTTP(firstResponse, req)
+	api.DefaultRouter.ServeHTTP(firstResponse, req)
 
 	secondResponse := httptest.NewRecorder()
-	app.ServeHTTP(secondResponse, req)
+	api.DefaultRouter.ServeHTTP(secondResponse, req)
 
 	if firstResponse.Body.Len() != secondResponse.Body.Len() {
 		t.Fatalf(
@@ -92,7 +93,7 @@ func TestPutOnNewTokenShouldIncrementValue(t *testing.T) {
 	}
 
 	response := httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 201 {
 		t.Fatalf("Incorrect status code: expected %v, actual %v", 201, response.Code)
@@ -105,7 +106,7 @@ func TestPutOnNewTokenShouldIncrementValue(t *testing.T) {
 	}
 
 	response = httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 200 {
 		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)
@@ -116,7 +117,7 @@ func TestPutOnNewTokenShouldIncrementValue(t *testing.T) {
 	}
 
 	response = httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 200 {
 		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)
@@ -136,7 +137,7 @@ func TestPutOnNewNamespaceShouldIncrementFromZero(t *testing.T) {
 	}
 
 	response := httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 201 {
 		t.Fatalf("Incorrect status code: expected %v, actual %v", 201, response.Code)
@@ -149,7 +150,7 @@ func TestPutOnNewNamespaceShouldIncrementFromZero(t *testing.T) {
 	}
 
 	response = httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 200 {
 		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)
@@ -160,7 +161,7 @@ func TestPutOnNewNamespaceShouldIncrementFromZero(t *testing.T) {
 	}
 
 	response = httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 200 {
 		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)
@@ -177,7 +178,7 @@ func TestPutOnNewNamespaceShouldIncrementFromZero(t *testing.T) {
 	}
 
 	response = httptest.NewRecorder()
-	app.ServeHTTP(response, req)
+	api.DefaultRouter.ServeHTTP(response, req)
 
 	if response.Code != 200 {
 		t.Fatalf("Incorrect status code: expected %v, actual %v", 200, response.Code)

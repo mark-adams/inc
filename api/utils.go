@@ -1,4 +1,4 @@
-package main
+package api
 
 // MetricCollector reports application metrics
 type MetricCollector interface {

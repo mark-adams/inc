@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"crypto/rand"
@@ -10,13 +10,12 @@ import (
 
 	statsd "gopkg.in/alexcesaro/statsd.v2"
 
-	"github.com/gorilla/handlers"
-	_ "github.com/lib/pq"
 	"github.com/mark-adams/inc/backends"
 	"github.com/pressly/chi"
 )
 
-var app *chi.Mux
+// DefaultRouter is a mux populated with the default set of handlers for the inc app
+var DefaultRouter *chi.Mux
 var metrics MetricCollector
 
 func getRandomID() (string, error) {
@@ -98,38 +97,24 @@ func IncrementTokenNamespace(w http.ResponseWriter, r *http.Request) {
 func init() {
 	var err error
 
-	app = chi.NewRouter()
+	router := chi.NewRouter()
+
 	metrics = &NullMetricsCollector{}
 	metrics, err = statsd.New(statsd.Address(os.Getenv("STATSD_HOST")))
-
 	if err != nil && os.Getenv("STATSD_HOST") != "" {
 		log.Printf("error initializing metrics: %s", err)
+		metrics = &NullMetricsCollector{}
 	}
 
-	app.Get("/_healthcheck", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/_healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "OK")
 	})
 
-	app.Post("/new", NewToken)
-	app.Route("/:token", func(r chi.Router) {
+	router.Post("/new", NewToken)
+	router.Route("/:token", func(r chi.Router) {
 		r.Put("/", IncrementToken)
 		r.Put("/:namespace", IncrementTokenNamespace)
 	})
-}
 
-func main() {
-	db, err := backends.GetBackend()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Create the database schema if needed
-	err = db.CreateSchema()
-	if err != nil {
-		log.Fatal(err)
-	}
-	db.Close()
-
-	handler := handlers.CombinedLoggingHandler(os.Stdout, app)
-	http.ListenAndServe(":8080", handler)
+	DefaultRouter = router
 }
