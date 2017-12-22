@@ -111,10 +111,11 @@ func init() {
 	})
 
 	router.Post("/new", NewToken)
-	router.Route("/:token", func(r chi.Router) {
+	router.Route("/{token}", func(r chi.Router) {
 		r.Put("/", IncrementToken)
-		r.Put("/:namespace", IncrementTokenNamespace)
+		r.Put("/{namespace}", IncrementTokenNamespace)
 	})
+	router.Post("/new", NewToken)
 
 	DefaultRouter = router
 }
