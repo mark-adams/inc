@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Build & Tests
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+
     services:
       # Label used to access the service container
       postgres:
@@ -19,18 +19,22 @@ jobs:
         image: postgres
         # Provide the password for postgres
         env:
+          POSTGRES_USER: postegre
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: inc_test
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
     - uses: actions/checkout@v2
-    - name: Create database
-      run: psql -c 'create database inc_test;' -U postgres
-      
-    - name: Run the tests
+    - name: Build
+      run: go build .
+    - name: Tests
       run: go test -v ./...
+      env:
+        PG_DB_URL: postgresql://postgres:postgres@localhost/?sslmode=disable
+
