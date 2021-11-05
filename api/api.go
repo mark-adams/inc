@@ -106,7 +106,7 @@ func init() {
 		metrics = &NullMetricsCollector{}
 	}
 
-	router.Get("/_healthcheck", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "OK")
 	})
 
