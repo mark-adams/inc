@@ -1,0 +1,13 @@
+github.com/felixge/httpsnoop v1.0.1/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
+github.com/felixge/httpsnoop v1.0.2 h1:+nS9g82KMXccJ/wp0zyRW9ZBHFETmMGtkk+2CTTrW4o=
+github.com/felixge/httpsnoop v1.0.2/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
+github.com/gorilla/handlers v1.5.1 h1:9lRY6j8DEeeBT10CvO9hGW0gmky0BprnvDI5vfhUHH4=
+github.com/gorilla/handlers v1.5.1/go.mod h1:t8XrUpc4KVXb7HGyJ4/cEnwQiaxrX/hz1Zv/4g96P1Q=
+github.com/lib/pq v1.10.3 h1:v9QZf2Sn6AmjXtQeFpdoq/eaNtYP6IN+7lcrygsIAtg=
+github.com/lib/pq v1.10.3/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+github.com/mark-adams/inc v0.0.0-20171222001939-e01eab41fbb6 h1:z8llH7BaGXFOH95QQTRnNlHOLB4/XqFxIASB4bovewM=
+github.com/mark-adams/inc v0.0.0-20171222001939-e01eab41fbb6/go.mod h1:mEx0bEy1AwWePl6nabGcX6O9aDvsU0a2gJXQB5kC0tY=
+github.com/pressly/chi v4.1.2+incompatible h1:N+E8DM9Q7luXuNMmr9MVnbUzQSSXsl2L6kuykP1ux7g=
+github.com/pressly/chi v4.1.2+incompatible/go.mod h1:s/kslmeFE633XtTPvfX2olbs4ymzIHxGGXmEJ/AvPT8=
+gopkg.in/alexcesaro/statsd.v2 v2.0.0 h1:FXkZSCZIH17vLCO5sO2UucTHsH9pc+17F6pl3JVCwMc=
+gopkg.in/alexcesaro/statsd.v2 v2.0.0/go.mod h1:i0ubccKGzBVNBpdGV5MocxyA/XlLUJzA7SLonnE4drU=
