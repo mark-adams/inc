@@ -1,4 +1,4 @@
-FROM golang:1.17
+FROM golang:1.19
 
 RUN groupadd -r inc && useradd --no-log-init -r -g inc inc
 

@@ -2,6 +2,7 @@ package backends
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -23,8 +24,10 @@ var errInvalidToken = errors.New("invalid token")
 func NewBackendFromString(url string) (Backend, error) {
 	parts := strings.Split(url, "://")
 	if len(parts) < 2 {
-		return nil, errors.New("Invalid connection string")
+		return nil, errors.New("invalid connection string")
 	}
+
+	fmt.Println(url)
 
 	switch parts[0] {
 	case "postgres":
@@ -39,8 +42,14 @@ func NewBackendFromString(url string) (Backend, error) {
 			return nil, err
 		}
 		return backend, nil
+	case "redis":
+		backend, err := NewRedisBackend(url)
+		if err != nil {
+			return nil, err
+		}
+		return backend, nil
 	default:
-		return nil, errors.New("Invalid backend type")
+		return nil, errors.New("invalid backend type")
 	}
 }
 
